@@ -1,5 +1,5 @@
 /***************************************
-Merging daily and hourly data
+Event study analysis
 ***************************************/
 version 15.0
 set more off
@@ -108,11 +108,3 @@ foreach s of local starthours {
 	
 	restore
 }
-				
-*DID
-						
-/* reghdfe log_ped i.information_period_ID  post_period_ID#i.time_clock, absorb($binned_pre_3  $binned_post_3 $FE_s) cluster(idlandkreis) nocons
-		
-/* reghdfe log_ped i.information_period_ID  post_period_ID#i.time_clock, absorb($binned_pre_3 $npi $binned_post_3 $FE_s) cluster(idlandkreis) nocons
-				
-restore
