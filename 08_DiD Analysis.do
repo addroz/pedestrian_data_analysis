@@ -27,10 +27,24 @@ global binned_post_3 "i.outbreak_44_1##i.idlandkreis i.outbreak_44_2##i.idlandkr
 
 use "${statadata}06_Full_Data_Merged.dta", clear
 
+forvalues x=0/23{
+	gen h_post_period_`x' = 0
+	replace	h_post_period_`x' = 1 if post_period_ID == 1 & time_clock == `x'
+	label variable h_post_period_`x' "Post period, at time `x'" 
+}
+
 *DID
-						
-reghdfe log_ped i.information_period_ID  post_period_ID#i.time_clock, absorb($binned_pre_3  $binned_post_3 $FE_s) cluster(idlandkreis) nocons
 		
-reghdfe log_ped i.information_period_ID  post_period_ID#i.time_clock, absorb($binned_pre_3 $npi $binned_post_3 $FE_s) cluster(idlandkreis) nocons
-				
+reghdfe log_ped i.information_period_ID h_post_period*, absorb($binned_pre_3 $npi $binned_post_3 $FE_s) cluster(idlandkreis) nocons
+
+coefplot, drop(_cons, 1.information_period_ID) xline(0)
+graph export "${figures}did_without_main_effect.pdf" , as(pdf) replace 
+
+reghdfe log_ped i.information_period_ID i.post_period_ID h_post_period*, absorb($binned_pre_3 $npi $binned_post_3 $FE_s) cluster(idlandkreis) nocons
+
+label variable post_period_ID`x' "Post period"
+
+coefplot, drop(_cons, 1.information_period_ID) xline(0)
+graph export "${figures}did_with_main_effect.pdf" , as(pdf) replace 
+
 restore
