@@ -14,7 +14,7 @@ global path = "C:\Users\adamd\OneDrive\Pulpit\RA EE\PedestrianDataAnalysis\Pedes
 cd "${path}"
 global statadata = "${path}Stata Data\"
 global data_hourly = "${statadata}05_Dataset_Hourly_To_Merge_With_Daily.dta"
-global data_daily = "${statadata}merge_data_daily.dta"
+global data_daily = "${path}Input\merge_data_daily.dta"
 
 /******/
 
