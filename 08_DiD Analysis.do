@@ -26,54 +26,39 @@ global npi  " i.weather_num i.temp npi_day_care npi_primary_schools npi_secondar
 global binned_pre_3 "i.outbreak_0_1##i.idlandkreis i.outbreak_0_2##i.idlandkreis i.outbreak_0_3##i.idlandkreis i.outbreak_0_1 i.outbreak_0_2 i.outbreak_0_3"
 global binned_post_3 "i.outbreak_44_1##i.idlandkreis i.outbreak_44_2##i.idlandkreis  i.outbreak_44_3##i.idlandkreis i.outbreak_44_1 i.outbreak_44_2 i.outbreak_44_3 "
 
-// DiD on separate time clocks
-
-matrix drop _all
-mata: mata clear
-mat C = J(24,3,.)
-
-forvalues x=0/23{
-	use "${statadata}06_Full_Data_Merged.dta", clear
-	keep if time_clock == `x'
-	dis `x'
-	reghdfe log_ped i.information_period_ID i.post_period_ID, absorb($npi $FE_s_separate $binned_pre_3 $binned_post_3) cluster(idlandkreis) nocons
-	
-	mat C[`x' + 1,1] = _b[1.post_period_ID]
-	mat C[`x' + 1,2] = ( _b[1.post_period_ID] - (invttail(e(df_r),0.025)*_se[1.post_period_ID] )) 
-	mat C[`x' + 1,3] = (_b[1.post_period_ID] + (invttail(e(df_r),0.025)*_se[1.post_period_ID] ))
-	matrix list C
-}
-
-matrix rownames C = "Post period, at time 0" "Post period, at time 1" "Post period, at time 2" "Post period, at time 3" "Post period, at time 4" ///
-					"Post period, at time 5" "Post period, at time 6" "Post period, at time 7" "Post period, at time 8" "Post period, at time 9" ///
-					"Post period, at time 10" "Post period, at time 11" "Post period, at time 12" "Post period, at time 13" "Post period, at time 14" ///
-					"Post period, at time 15" "Post period, at time 16" "Post period, at time 17" "Post period, at time 18" "Post period, at time 19" ///
-					"Post period, at time 20" "Post period, at time 21" "Post period, at time 22" "Post period, at time 23" 
-matrix colnames C = EST LL UL
-
-coefplot matrix(C[,1]), ci((C[,2] C[,3])) xline(0)
-graph export "${figures}did_separate_periods.pdf" , as(pdf) replace 
-
 use "${statadata}06_Full_Data_Merged.dta", clear
 
 forvalues x=0/23{
 	gen h_post_period_`x' = 0
 	replace	h_post_period_`x' = 1 if post_period_ID == 1 & time_clock == `x'
-	label variable h_post_period_`x' "Post period, at time `x'" 
+	label variable h_post_period_`x' "`x':00" 
 }
 
 // DiD without main effects
 	
 reghdfe log_ped i.information_period_ID h_post_period*, absorb($npi $FE_s $binned_pre_3 $binned_post_3) cluster(idlandkreis) nocons
 
-coefplot, drop(_cons, 1.information_period_ID) xline(0)
+coefplot, drop(_cons, 1.information_period_ID) xline(0) xtitle("Estimated Post-Period Effect", size(medlarge)) ytitle("Time of the Day", size(medlarge)) ///
+		graphregion(color(white)) legend(off) msymbol(D) lcolor(navy) mcolor(navy) ciopts(recast(rcap))
 graph export "${figures}did_without_main_effect.pdf" , as(pdf) replace 
 
-// DiD with main effects
+// Same analysis using weekdays only
+use "${statadata}06_Full_Data_Merged.dta", clear
 
-reghdfe log_ped i.information_period_ID i.post_period_ID h_post_period*, absorb($npi $FE_s $binned_pre_3 $binned_post_3) cluster(idlandkreis) nocons
+keep if dow < 6
+keep if dow > 0
 
-label variable post_period_ID`x' "Post period"
+forvalues x=0/23{
+	gen h_post_period_`x' = 0
+	replace	h_post_period_`x' = 1 if post_period_ID == 1 & time_clock == `x'
+	label variable h_post_period_`x' "`x':00" 
+}
 
-coefplot, drop(_cons, 1.information_period_ID) xline(0)
-graph export "${figures}did_with_main_effect.pdf" , as(pdf) replace 
+// DiD without main effects
+	
+reghdfe log_ped i.information_period_ID h_post_period*, absorb($npi $FE_s $binned_pre_3 $binned_post_3) cluster(idlandkreis) nocons
+
+coefplot, drop(_cons, 1.information_period_ID) xline(0) xtitle("Estimated Post-Period Effect", size(medlarge)) ytitle("Time of the Day", size(medlarge)) ///
+		graphregion(color(white)) legend(off) msymbol(D) lcolor(navy) mcolor(navy) ciopts(recast(rcap))
+graph export "${figures}did_without_main_effect_no_weekends.pdf" , as(pdf) replace 
+

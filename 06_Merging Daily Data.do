@@ -18,6 +18,25 @@ global data_daily = "${path}Input\merge_data_daily.dta"
 
 /******/
 
+use "${data_daily}", clear
+
+
+forvalues x=44/64{
+	local prev_x = `x' - 1
+	local next_x = `x' + 1
+	by id : gen outbreak_`x' = outbreak_`prev_x'[_n-1]
+	replace outbreak_`x' = 0 if outbreak_`x' == .
+	
+	by id : gen outbreak_`next_x'_1 = outbreak_`x'_1[_n-1]
+	replace outbreak_`next_x'_1 = 0 if outbreak_`next_x'_1 == .
+	by id : gen outbreak_`next_x'_2 = outbreak_`x'_2[_n-1]
+	replace outbreak_`next_x'_2 = 0 if outbreak_`next_x'_2 == .
+	by id : gen outbreak_`next_x'_3 = outbreak_`x'_3[_n-1]
+	replace outbreak_`next_x'_3 = 0 if outbreak_`next_x'_3 == .
+} 
+
+save "${statadata}06_Data_Daily_Modified.dta", replace
+
 use "${data_hourly}", clear
 
 rename landkreis_ID idlandkreis
@@ -25,7 +44,7 @@ rename location_ID idlocation
 
 destring idlandkreis, replace
 
-merge m:1 date idlandkreis using "${data_daily}"
+merge m:1 date idlandkreis using "${statadata}06_Data_Daily_Modified.dta"
 
 // drop if _merge == 2
 keep if _merge == 3
