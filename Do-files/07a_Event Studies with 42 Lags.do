@@ -43,18 +43,20 @@ local last_lead=`reference_period' - 1
 local first_lead =`start_period' - `number_leads'
 local first_lag=`reference_period' + 1
 
-local starthours 0 6 12 18
+local n_periods 6
+local starthours 0 0 6 6 12 18
+local numhours 24 6 6 4 6 6
 
-foreach s of local starthours {
+forvalues s=1/`n_periods'{
 	use "${statadata}06_Full_Data_Merged.dta", clear
-
-	keep if time_clock >= `s' & time_clock < `s' + 6
+	local s_start: word `s' of `starthours'
+	local s_num: word `s' of `numhours'
+	
+	keep if time_clock >= `s_start' & time_clock < `s_start' + `s_num'
+	
 	keep if laser_failure == 0
 	keep if laser_vac == 0
 	
-	//keep if dow < 6
-	//keep if dow > 0
-
 	matrix drop _all
 	mata: mata clear
 	mat C = J(120,4,.)
@@ -108,8 +110,8 @@ foreach s of local starthours {
 			yscale(r(-0.2 (0.05) 0.2)) ylabel(-0.2 (0.05) 0.2, labgap(*1.4)) yscale(titlegap(*3)) xscale(titlegap(*4)) ///
 			xline(25.5, lwidth(12.67) lc(gs14))    yline(0, lcolor(black)) xline(22, lc(cranberry))  xlabel(`first_lead' "- `number_leads'" 8 "-14"   15 "-7"  `start_period'  "0" 29 "+7"  36 "+14" 43 "+21" 50 "+28" 57 "+35" `last_lag' "+ `number_lags'" , labgap(*1.4)) ///
 			ytitle("Estimated Effect Relative to t=-1", size(medlarge))  graphregion(color(white)) legend(off) xtitle("Days Relative to Start of the Outbreak", size(medlarge))							
-		
-	graph export "${figures}from_`s'_6h_window_region_fes_42_lags.pdf" , as(pdf) replace 
+	
+	graph export "${figures}from_`s_start'_`s_num'h_window_region_fes_42_lags.pdf" , as(pdf) replace 
 	
 	restore
 }

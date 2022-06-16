@@ -41,9 +41,9 @@ local last_lead=`reference_period' - 1
 local first_lead =`start_period' - `number_leads'
 local first_lag=`reference_period' + 1
 
-local n_periods 5
-local starthours 0 6 6 12 18
-local numhours 6 6 4 6 6
+local n_periods 6
+local starthours 0 6 6 12 18 0
+local numhours 6 6 4 6 6 24
 
 forvalues s=1/`n_periods'{
 	use "${statadata}06_Full_Data_Merged.dta", clear
